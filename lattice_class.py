@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import math
 
 class Lattice:
     def __init__(self):
@@ -41,6 +42,12 @@ class Lattice:
     
     def get_num_edges(self):
         return self._num_edges
+    
+    def get_nodes(self):
+        return self._nodes
+
+    def get_edges(self):
+        return self._edges
 
 class SquareLattice(Lattice): 
     def __init__(self, N):
@@ -50,9 +57,12 @@ class SquareLattice(Lattice):
                 self.add_node((float(j/(N-1)), float((N-1-i)/(N-1))))
         
         for i in range(N):
-            for j in range(N-1):
+            for j in range(N):
                 self.add_edge((i*N+j, i*N+(j+1)%N))
                 self.add_edge((((i+1)*N+j)%(N**2), i*N+j))
+        
+    def get_reciprocal_nodes(self):
+        return [(2.0 * math.pi * r[0], 2.0 * math.pi * r[1]) for r in self._nodes]
 
 class ChainLattice(Lattice):
     def __init__(self, N):
