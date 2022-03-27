@@ -50,25 +50,49 @@ class Lattice:
         return self._edges
 
 class SquareLattice(Lattice): 
-    def __init__(self, N):
+    def __init__(self, N, BC="open"):
         super().__init__()
         for i in range(N):
             for j in range(N):
                 self.add_node((float(j/(N-1)), float((N-1-i)/(N-1))))
         
-        for i in range(N):
-            for j in range(N):
-                self.add_edge((i*N+j, i*N+(j+1)%N))
-                self.add_edge((((i+1)*N+j)%(N**2), i*N+j))
+        assert BC == "open" or BC == "periodic"
+
+        if BC == "open":
+            for i in range(N-1):
+                self.add_edge((i*N+N-1, (i+1)*N+N-1))
+                self.add_edge(((N-1)*N+i, (N-1)*N+i+1))
+                for j in range(N-1):
+                    self.add_edge((i*N+j, i*N+(j+1)))
+                    self.add_edge(((i+1)*N+j, i*N+j))
+        elif BC == "periodic":
+            for i in range(N):
+                for j in range(N):
+                    self.add_edge((i*N+j, i*N+(j+1)%N))
+                    self.add_edge((((i+1)*N+j)%(N**2), i*N+j))
+
         
     def get_reciprocal_nodes(self):
         return [(2.0 * math.pi * r[0], 2.0 * math.pi * r[1]) for r in self._nodes]
 
 class ChainLattice(Lattice):
-    def __init__(self, N):
+    def __init__(self, N, BC="open"):
         super().__init__()
         for i in range(N):
             self.add_node((float(i)/(N-1), 0.0))
         
-        for i in range(N):
+        assert BC == "open" or "periodic"
+
+        bool = -1
+        if BC == "open":
+            bool = 1
+        elif BC == "periodic":
+            bool = 0
+
+        assert bool == 0 or bool == 1
+
+        for i in range(N-bool):
             self.add_edge((i, (i+1)%N))
+    
+    def get_reciprocal_nodes(self):
+        return [(2.0 * math.pi * r[0], 2.0 * math.pi * r[1]) for r in self._nodes]
