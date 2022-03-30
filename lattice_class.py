@@ -1,3 +1,4 @@
+import site
 import matplotlib.pyplot as plt
 import math
 
@@ -8,30 +9,33 @@ class Lattice:
         self._num_edges = 0
         self._sites = []
         self._edges = []
+        self._local_edge_idx = []
 
     def add_site(self, coords):
         self._sites.append(coords)
         self._edges.append([])
+        self._local_edge_idx.append([])
         self._num_sites = self._num_sites + 1
+
+    def move_site(self, site_idx, coords):
+        assert site_idx < self._num_sites
+        self._sites[site_idx] = coords
 
     def remove_site(self, site_idx):
         # remove all incoming and outgoing edges
-        assert site_idx < len(self._sites)
-        num_sites = self.get_num_sites()
+        assert site_idx < len(self._sites), "Site exists assertion failed"
         edge_cnt = 0
         for (edge_idx, edge_lst) in enumerate(self._edges):
             for neigh in edge_lst:
                 if neigh == site_idx:
                     # self._edges.remove(site_idx)
                     self.remove_edge((site_idx, edge_idx))
-                    print("Edge between {} and {} removed".format(site_idx, edge_idx))
                     edge_cnt = edge_cnt + 1
 
-        print("list before pop", self._edges)
         # remove site from self._sites and self._edges
         self._sites.pop(site_idx)
         self._edges.pop(site_idx)
-        print("list after pop", self._edges)
+        self._local_edge_idx.pop(site_idx)
 
         # shift inidices
         for (edge_idx, edge_lst) in enumerate(self._edges):
@@ -48,16 +52,32 @@ class Lattice:
             self.get_num_sites() >= 0 and self.get_num_edges() >= 0
         ), "Postivie number of sites and edges assertion failed"
 
-    def add_edge(self, sites):
+    def add_edge(self, sites, local_edge_indicies=(None, None)):
         assert sites[0] < len(self._sites) and sites[1] < len(self._sites)
         self._edges[sites[0]].append(sites[1])
         self._edges[sites[1]].append(sites[0])
+
+        self._local_edge_idx[sites[0]].append(local_edge_indicies[0])
+        self._local_edge_idx[sites[1]].append(local_edge_indicies[1])
+
         self._num_edges = self._num_edges + 1
 
     def remove_edge(self, sites):
         assert sites[0] < len(self._sites) and sites[1] < len(self._sites)
-        self._edges[sites[0]].remove(sites[1])
-        self._edges[sites[1]].remove(sites[0])
+
+        site_0_list_idx = self._edges[sites[0]].index(sites[1])
+        site_1_list_idx = self._edges[sites[1]].index(sites[0])
+
+        self._edges[sites[0]].pop(site_0_list_idx)
+        self._edges[sites[1]].pop(site_1_list_idx)
+
+        # TODO: REMOVE THIS BLOCK IF THIS WORKS
+        # self._edges[sites[0]].remove(sites[1])
+        # self._edges[sites[1]].remove(sites[0])
+
+        self._local_edge_idx[sites[0]].pop(site_0_list_idx)
+        self._local_edge_idx[sites[1]].pop(site_1_list_idx)
+
         self._num_edges = self._num_edges - 1
 
     def plot(self, show_idx_bool=False):
@@ -66,7 +86,13 @@ class Lattice:
 
         fig, ax = plt.subplots()
 
-        ax.set_box_aspect(1)
+        x_width = max(x_vals) - min(x_vals)
+        y_width = max(y_vals) - min(y_vals)
+        min_ratio_param = 0.1
+        y_x_ratio = max(y_width, min_ratio_param * x_width) / max(
+            x_width, min_ratio_param * y_width
+        )
+        ax.set_box_aspect(y_x_ratio)
 
         # plot edges
         for idx, site in enumerate(self._sites):
@@ -81,10 +107,14 @@ class Lattice:
                 )
 
         # plot sites
+
+        plt.xticks(list(dict.fromkeys(x_vals)))
+        plt.yticks(list(dict.fromkeys(y_vals)))
+
         plt.xlabel(r"$x$")
         plt.ylabel(r"$y$")
-        plt.grid(linestyle=":")
-        ax.scatter(x_vals, y_vals, c="red", zorder=1)
+        plt.grid(linestyle=":", zorder=-10)
+        ax.scatter(x_vals, y_vals, c="red", zorder=10)
 
         plt.show()
 
@@ -99,6 +129,25 @@ class Lattice:
 
     def get_edges(self):
         return self._edges
+
+    def get_local_edge_indices(self):
+        return self._local_edge_idx
+
+    def get_local_edge_index(self, site_idx, neighbour_idx):
+        assert (
+            neighbour_idx in self._edges[site_idx]
+        ), "Site {} and {} are not adjacent".format(site_idx, neighbour_idx)
+        return self._local_edge_idx[site_idx][
+            self._edges[site_idx].index(neighbour_idx)
+        ]
+
+    def change_local_edge_index(self, sites, new_local_idx):
+        assert (sites[1] in self._edges[sites[0]]) and (
+            sites[0] in self._edges[sites[1]]
+        ), "Site {} and {} are not adjacent".format(sites[0], sites[1])
+        self._local_edge_idx[sites[0]][
+            self._edges[sites[0]].index(sites[1])
+        ] = new_local_idx
 
 
 class BravaisLattice(Lattice):
@@ -128,27 +177,43 @@ class BravaisLattice(Lattice):
                     (
                         i * self._num_x_repititions + self._num_x_repititions - 1,
                         (i + 1) * self._num_x_repititions + self._num_x_repititions - 1,
-                    )
+                    ),
+                    (
+                        2,
+                        0,
+                    ),
                 )
                 for j in range(self._num_x_repititions - 1):
                     self.add_edge(
                         (
                             i * self._num_x_repititions + j,
                             i * self._num_x_repititions + (j + 1),
-                        )
+                        ),
+                        (
+                            1,
+                            3,
+                        ),
                     )
                     self.add_edge(
                         (
-                            (i + 1) * self._num_x_repititions + j,
                             i * self._num_x_repititions + j,
-                        )
+                            (i + 1) * self._num_x_repititions + j,
+                        ),
+                        (
+                            2,
+                            0,
+                        ),
                     )
             for j in range(self._num_x_repititions - 1):
                 self.add_edge(
                     (
                         (self._num_y_repititions - 1) * self._num_x_repititions + j,
                         (self._num_y_repititions - 1) * self._num_x_repititions + j + 1,
-                    )
+                    ),
+                    (
+                        1,
+                        3,
+                    ),
                 )
         elif BC == "periodic":
             print("hello there")
@@ -159,14 +224,22 @@ class BravaisLattice(Lattice):
                             i * self._num_x_repititions + j,
                             i * self._num_x_repititions
                             + (j + 1) % self._num_x_repititions,
-                        )
+                        ),
+                        (
+                            1,
+                            3,
+                        ),
                     )
                     self.add_edge(
                         (
                             ((i + 1) * self._num_x_repititions + j)
                             % (self._num_x_repititions * self._num_y_repititions),
                             i * self._num_x_repititions + j,
-                        )
+                        ),
+                        (
+                            0,
+                            2,
+                        ),
                     )
 
     def get_reciprocal_sites(self):
@@ -211,46 +284,14 @@ class BravaisLattice(Lattice):
         return reciprocal_sites
 
 
-class SquareLatticeAlt(BravaisLattice):
+class SquareLattice(BravaisLattice):
     def __init__(self, N, BC="open"):
         a1 = (1.0, 0.0)
         a2 = (0.0, 1.0)
         super().__init__(a1, a2, N, N, BC=BC)
 
 
-class SquareLattice(Lattice):
-    def __init__(self, N, BC="open"):
-        super().__init__()
-        for i in range(N):
-            for j in range(N):
-                self.add_site((float(j / (N - 1)), float((N - 1 - i) / (N - 1))))
-
-        assert BC == "open" or BC == "periodic"
-
-        if BC == "open":
-            for i in range(N - 1):
-                self.add_edge((i * N + N - 1, (i + 1) * N + N - 1))
-                self.add_edge(((N - 1) * N + i, (N - 1) * N + i + 1))
-                for j in range(N - 1):
-                    self.add_edge((i * N + j, i * N + (j + 1)))
-                    self.add_edge(((i + 1) * N + j, i * N + j))
-        elif BC == "periodic":
-            for i in range(N):
-                for j in range(N):
-                    self.add_edge((i * N + j, i * N + (j + 1) % N))
-                    self.add_edge((((i + 1) * N + j) % (N**2), i * N + j))
-
-    def get_reciprocal_sites(self):
-        return [
-            (
-                2.0 * math.pi * (math.sqrt(self.get_num_sites()) - 1) ** 2 * r[0],
-                2.0 * math.pi * (math.sqrt(self.get_num_sites()) - 1) ** 2 * r[1],
-            )
-            for r in self._sites
-        ]
-
-
-class ChainLatticeAlt(BravaisLattice):
+class ChainLattice(BravaisLattice):
     def __init__(self, N, BC="open"):
         a1 = (1.0, 0.0)
         a2 = (0.0, 1.0)
@@ -259,26 +300,3 @@ class ChainLatticeAlt(BravaisLattice):
         if BC == "periodic":
             for i in range(self.get_num_sites()):
                 self.remove_edge((i, i))
-
-
-class ChainLattice(Lattice):
-    def __init__(self, N, BC="open"):
-        super().__init__()
-        for i in range(N):
-            self.add_site((float(i) / (N - 1), 0.0))
-
-        assert BC == "open" or "periodic"
-
-        bool = -1
-        if BC == "open":
-            bool = 1
-        elif BC == "periodic":
-            bool = 0
-
-        assert bool == 0 or bool == 1
-
-        for i in range(N - bool):
-            self.add_edge((i, (i + 1) % N))
-
-    def get_reciprocal_sites(self):
-        return [(2.0 * math.pi * r[0], 2.0 * math.pi * r[1]) for r in self._sites]
