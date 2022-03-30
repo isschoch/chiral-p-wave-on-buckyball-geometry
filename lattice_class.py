@@ -28,7 +28,6 @@ class Lattice:
         for (edge_idx, edge_lst) in enumerate(self._edges):
             for neigh in edge_lst:
                 if neigh == site_idx:
-                    # self._edges.remove(site_idx)
                     self.remove_edge((site_idx, edge_idx))
                     edge_cnt = edge_cnt + 1
 
@@ -71,10 +70,6 @@ class Lattice:
         self._edges[sites[0]].pop(site_0_list_idx)
         self._edges[sites[1]].pop(site_1_list_idx)
 
-        # TODO: REMOVE THIS BLOCK IF THIS WORKS
-        # self._edges[sites[0]].remove(sites[1])
-        # self._edges[sites[1]].remove(sites[0])
-
         self._local_edge_idx[sites[0]].pop(site_0_list_idx)
         self._local_edge_idx[sites[1]].pop(site_1_list_idx)
 
@@ -107,7 +102,6 @@ class Lattice:
                 )
 
         # plot sites
-
         plt.xticks(list(dict.fromkeys(x_vals)))
         plt.yticks(list(dict.fromkeys(y_vals)))
 
