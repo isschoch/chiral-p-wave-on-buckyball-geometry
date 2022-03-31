@@ -76,8 +76,8 @@ class Lattice:
         self._num_edges = self._num_edges - 1
 
     def plot(self, show_idx_bool=False):
-        x_vals = [self._sites[i][0] for i in range(self._num_sites)]
-        y_vals = [self._sites[i][1] for i in range(self._num_sites)]
+        x_vals = [self._sites[i][0] for i in range(self.get_num_sites())]
+        y_vals = [self._sites[i][1] for i in range(self.get_num_sites())]
 
         fig, ax = plt.subplots()
 
@@ -92,7 +92,7 @@ class Lattice:
         # plot edges
         for idx, site in enumerate(self._sites):
             if show_idx_bool:
-                ax.text(site[0], site[1], "{}".format(idx))
+                ax.text(site[0], site[1], "{}".format(idx), zorder=100, c='gray')
             for neighbour in self._edges[idx]:
                 ax.plot(
                     [site[0], self._sites[neighbour][0]],
@@ -108,7 +108,7 @@ class Lattice:
         plt.xlabel(r"$x$")
         plt.ylabel(r"$y$")
         plt.grid(linestyle=":", zorder=-10)
-        ax.scatter(x_vals, y_vals, c="red", zorder=10)
+        ax.scatter(x_vals, y_vals, c="red", zorder=10, s=min(100, 10 * max(x_width, y_width))**2 / self.get_num_sites())
 
         plt.show()
 
