@@ -40,6 +40,12 @@ class HamiltonianConstructor:
     def get_hop_hamiltonian(self, local_edge_idx):
         return self.hop_hamiltonians[local_edge_idx]
 
+    def get_block_indices(self, num_sites):
+        return [
+            slice(block_idx * self.dim_H_BdG, (block_idx + 1) * self.dim_H_BdG)
+            for block_idx in range(num_sites)
+        ]
+
     def construct_direct_lattice_hamiltonian(self, lattice):
         num_sites = lattice.get_num_sites()
         lattice_edges = lattice.get_edges()
@@ -49,10 +55,7 @@ class HamiltonianConstructor:
             dtype=complex,
         )
 
-        block_indices = [
-            slice(block_idx * self.dim_H_BdG, (block_idx + 1) * self.dim_H_BdG)
-            for block_idx in range(num_sites)
-        ]
+        block_indices = self.get_block_indices(num_sites)
 
         for (site_idx, site) in enumerate(lattice.get_sites()):
             H_direct_lattice[
@@ -66,4 +69,34 @@ class HamiltonianConstructor:
                     lattice.get_local_edge_index(site_idx, neighbour_idx)
                 ]
 
+        assert self._hermitian_check(
+            H_direct_lattice
+        ), "Hermitian Hamiltonian check assertion failed."
+
         return H_direct_lattice
+
+    def add_tunneling_phase(self, H_direct_lattice, edge, phase, num_sites):
+        block_indices = self.get_block_indices(num_sites)
+        for i in range(2):
+            np.fill_diagonal(
+                H_direct_lattice[
+                    block_indices[edge[i]], block_indices[edge[(i + 1) % 2]]
+                ],
+                (
+                    phase * ((-1) ** i + 1) // 2
+                    + phase.conjugate() * (-((-1) ** i) + 1) // 2
+                )
+                * np.diag(
+                    H_direct_lattice[
+                        block_indices[edge[i]],
+                        block_indices[edge[(i + 1) % 2]],
+                    ]
+                ),
+            )
+
+        assert self._hermitian_check(
+            H_direct_lattice
+        ), "Hermitian Hamtilonian check assertion failed."
+
+    def _hermitian_check(self, A, rtol=1e-05, atol=1e-08):
+        return np.allclose(A, A.conj().T, rtol=rtol, atol=atol)

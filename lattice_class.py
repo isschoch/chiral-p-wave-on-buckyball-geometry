@@ -108,12 +108,15 @@ class Lattice:
         plt.xlabel(r"$x$")
         plt.ylabel(r"$y$")
         plt.grid(linestyle=":", zorder=-10)
+
+        site_size = max(500 / self.get_num_sites(), 10)
+
         ax.scatter(
             x_vals,
             y_vals,
             c="red",
             zorder=10,
-            s=min(100, 10 * max(x_width, y_width)) ** 2 / self.get_num_sites(),
+            s=site_size,
         )
 
         plt.show()
