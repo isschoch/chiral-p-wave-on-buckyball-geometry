@@ -77,22 +77,26 @@ class HamiltonianConstructor:
 
     def add_tunneling_phase(self, H_direct_lattice, edge, phase, num_sites):
         block_indices = self.get_block_indices(num_sites)
-        for i in range(2):
-            np.fill_diagonal(
+        np.fill_diagonal(
+            H_direct_lattice[block_indices[edge[0]], block_indices[edge[1]]],
+            phase
+            * np.diag(
                 H_direct_lattice[
-                    block_indices[edge[i]], block_indices[edge[(i + 1) % 2]]
-                ],
-                (
-                    phase * ((-1) ** i + 1) // 2
-                    + phase.conjugate() * (-((-1) ** i) + 1) // 2
-                )
-                * np.diag(
-                    H_direct_lattice[
-                        block_indices[edge[i]],
-                        block_indices[edge[(i + 1) % 2]],
-                    ]
-                ),
-            )
+                    block_indices[edge[0]],
+                    block_indices[edge[1]],
+                ]
+            ),
+        )
+        np.fill_diagonal(
+            H_direct_lattice[block_indices[edge[1]], block_indices[edge[0]]],
+            phase.conjugate()
+            * np.diag(
+                H_direct_lattice[
+                    block_indices[edge[1]],
+                    block_indices[edge[0]],
+                ]
+            ),
+        )
 
         assert self._hermitian_check(
             H_direct_lattice
