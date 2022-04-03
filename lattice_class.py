@@ -94,7 +94,16 @@ class Lattice:
         # plot edges
         for idx, site in enumerate(self._sites):
             if show_idx_bool:
-                ax.text(site[0], site[1], "{}".format(idx), zorder=100, c="teal", size=8 * (1/(1+math.exp(-math.sqrt(site_size)))**2), horizontalalignment='right', verticalalignment='bottom')
+                ax.text(
+                    site[0],
+                    site[1],
+                    "{}".format(idx),
+                    zorder=100,
+                    c="teal",
+                    size=8 * (1 / (1 + math.exp(-math.sqrt(site_size))) ** 2),
+                    horizontalalignment="right",
+                    verticalalignment="bottom",
+                )
             for neighbour in self._edges[idx]:
                 ax.plot(
                     [site[0], self._sites[neighbour][0]],
@@ -110,7 +119,6 @@ class Lattice:
         plt.xlabel(r"$x$")
         plt.ylabel(r"$y$")
         plt.grid(linestyle=":", zorder=-10)
-
 
         ax.scatter(
             x_vals,
