@@ -418,33 +418,12 @@ class HoneycombLattice(CrystalLattice):
             BC=BC,
         )
 
-        # self._lattice_vec1 = a1
-        # self._lattice_vec2 = a2
-
-        # self._num_vec1_repititions = M
-        # self._num_vec2_repititions = N
-
-        # for i in range(self._num_vec2_repititions - 1, -1, -1):
-        #     for j in range(self._num_vec1_repititions):
-        #         self.add_site(
-        #             (
-        #                 i * self._lattice_vec2[0] + j * self._lattice_vec1[0],
-        #                 i * self._lattice_vec2[1] + j * self._lattice_vec1[1],
-        #             )
-        #         )
-        #         self.add_site(
-        #             (
-        #                 b[0] + i * self._lattice_vec2[0] + j * self._lattice_vec1[0],
-        #                 b[1] + i * self._lattice_vec2[1] + j * self._lattice_vec1[1],
-        #             )
-        #         )
-        #         self.add_edge((self.get_num_sites()-2, self.get_num_sites()-1))
-
-        # # for i in range(1, self.get_num_sites(), 2):
-        # #     self.add_edge((i, (i+2*self._num_vec1_repititions-1)%self.get_num_sites()))
-        # #     self.add_edge((i, (i+2*self._num_vec1_repititions+1)%self.get_num_sites()))
-
-        # for i in range(self._num_vec2_repititions-1):
-        #     for j in range(self._num_vec1_repititions-1):
-        #         self.add_edge((2*(j+i*self._num_vec1_repititions)+1, 2*(j + self._num_vec1_repititions+i*self._num_vec1_repititions)))
-        #         self.add_edge((2*(j+i*self._num_vec1_repititions)+1, 2*(j + 1 + self._num_vec1_repititions+i*self._num_vec1_repititions)))
+        num_cells = self.get_num_cells()
+        num_unit_cell_sites = self.get_num_unit_cell_sites()
+        for i in range(self._num_vec2_repititions - 1):
+            self.add_edge(
+                (
+                    i * self._num_vec1_repititions * num_unit_cell_sites + self._num_vec1_repititions * num_unit_cell_sites - 2,
+                    (i + 1) * self._num_vec1_repititions * num_unit_cell_sites + self._num_vec1_repititions * num_unit_cell_sites - 1,
+                )
+            )
