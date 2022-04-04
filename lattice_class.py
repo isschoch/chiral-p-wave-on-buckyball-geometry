@@ -52,7 +52,9 @@ class Lattice:
         ), "Postivie number of sites and edges assertion failed"
 
     def add_edge(self, sites, local_edge_indicies=(None, None)):
-        assert sites[0] < len(self._sites) and sites[1] < len(self._sites)
+        assert sites[0] < len(self._sites) and sites[1] < len(
+            self._sites
+        ), "Both sites exist assertion failed while trying to add edge."
         self._edges[sites[0]].append(sites[1])
         self._edges[sites[1]].append(sites[0])
 
@@ -169,11 +171,11 @@ class BravaisLattice(Lattice):
         self._lattice_vec1 = a1
         self._lattice_vec2 = a2
 
-        self._num_x_repititions = M
-        self._num_y_repititions = N
+        self._num_vec1_repititions = M
+        self._num_vec2_repititions = N
 
-        for i in range(self._num_y_repititions - 1, -1, -1):
-            for j in range(self._num_x_repititions):
+        for i in range(self._num_vec2_repititions - 1, -1, -1):
+            for j in range(self._num_vec1_repititions):
                 self.add_site(
                     (
                         i * self._lattice_vec2[0] + j * self._lattice_vec1[0],
@@ -184,22 +186,24 @@ class BravaisLattice(Lattice):
         assert BC == "open" or BC == "periodic"
 
         if BC == "open":
-            for i in range(self._num_y_repititions - 1):
+            for i in range(self._num_vec2_repititions - 1):
                 self.add_edge(
                     (
-                        i * self._num_x_repititions + self._num_x_repititions - 1,
-                        (i + 1) * self._num_x_repititions + self._num_x_repititions - 1,
+                        i * self._num_vec1_repititions + self._num_vec1_repititions - 1,
+                        (i + 1) * self._num_vec1_repititions
+                        + self._num_vec1_repititions
+                        - 1,
                     ),
                     (
                         2,
                         0,
                     ),
                 )
-                for j in range(self._num_x_repititions - 1):
+                for j in range(self._num_vec1_repititions - 1):
                     self.add_edge(
                         (
-                            i * self._num_x_repititions + j,
-                            i * self._num_x_repititions + (j + 1),
+                            i * self._num_vec1_repititions + j,
+                            i * self._num_vec1_repititions + (j + 1),
                         ),
                         (
                             1,
@@ -208,19 +212,22 @@ class BravaisLattice(Lattice):
                     )
                     self.add_edge(
                         (
-                            i * self._num_x_repititions + j,
-                            (i + 1) * self._num_x_repititions + j,
+                            i * self._num_vec1_repititions + j,
+                            (i + 1) * self._num_vec1_repititions + j,
                         ),
                         (
                             2,
                             0,
                         ),
                     )
-            for j in range(self._num_x_repititions - 1):
+            for j in range(self._num_vec1_repititions - 1):
                 self.add_edge(
                     (
-                        (self._num_y_repititions - 1) * self._num_x_repititions + j,
-                        (self._num_y_repititions - 1) * self._num_x_repititions + j + 1,
+                        (self._num_vec2_repititions - 1) * self._num_vec1_repititions
+                        + j,
+                        (self._num_vec2_repititions - 1) * self._num_vec1_repititions
+                        + j
+                        + 1,
                     ),
                     (
                         1,
@@ -229,13 +236,13 @@ class BravaisLattice(Lattice):
                 )
         elif BC == "periodic":
             print("hello there")
-            for i in range(self._num_y_repititions):
-                for j in range(self._num_x_repititions):
+            for i in range(self._num_vec2_repititions):
+                for j in range(self._num_vec1_repititions):
                     self.add_edge(
                         (
-                            i * self._num_x_repititions + j,
-                            i * self._num_x_repititions
-                            + (j + 1) % self._num_x_repititions,
+                            i * self._num_vec1_repititions + j,
+                            i * self._num_vec1_repititions
+                            + (j + 1) % self._num_vec1_repititions,
                         ),
                         (
                             1,
@@ -244,9 +251,9 @@ class BravaisLattice(Lattice):
                     )
                     self.add_edge(
                         (
-                            ((i + 1) * self._num_x_repititions + j)
-                            % (self._num_x_repititions * self._num_y_repititions),
-                            i * self._num_x_repititions + j,
+                            ((i + 1) * self._num_vec1_repititions + j)
+                            % (self._num_vec1_repititions * self._num_vec2_repititions),
+                            i * self._num_vec1_repititions + j,
                         ),
                         (
                             0,
@@ -280,8 +287,8 @@ class BravaisLattice(Lattice):
         ), r"assertion $a_i \cdot b_j = 2*\pi\delta_{i,j}$ failed"
 
         reciprocal_sites = []
-        for i in range(self._num_y_repititions - 1, -1, -1):
-            for j in range(self._num_x_repititions):
+        for i in range(self._num_vec2_repititions - 1, -1, -1):
+            for j in range(self._num_vec1_repititions):
                 reciprocal_sites.append(
                     (
                         i * reciprocal_a2[0] + j * reciprocal_a1[0],
@@ -312,3 +319,132 @@ class ChainLattice(BravaisLattice):
         if BC == "periodic":
             for i in range(self.get_num_sites()):
                 self.remove_edge((i, i))
+
+
+class CrystalLattice(Lattice):
+    def __init__(
+        self,
+        a1,
+        a2,
+        N,
+        M,
+        unit_cell_sites,
+        interrior_unit_cell_edges=[],
+        exterior_unit_cell_edges=[],
+        BC="open",
+    ):
+        super().__init__()
+
+        self._lattice_vec1 = a1
+        self._lattice_vec2 = a2
+
+        self._num_vec1_repititions = M
+        self._num_vec2_repititions = N
+
+        self._unit_cell_sites = unit_cell_sites
+        self._num_unit_cell_sites = len(unit_cell_sites)
+
+        for i in range(self._num_vec2_repititions - 1, -1, -1):
+            for j in range(self._num_vec1_repititions):
+                for b in unit_cell_sites:
+                    self.add_site(
+                        (
+                            b[0]
+                            + i * self._lattice_vec2[0]
+                            + j * self._lattice_vec1[0],
+                            b[1]
+                            + i * self._lattice_vec2[1]
+                            + j * self._lattice_vec1[1],
+                        )
+                    )
+
+        num_unit_cell_sites = self.get_num_unit_cell_sites()
+        num_sites = self.get_num_sites()
+        for edge in interrior_unit_cell_edges:
+            for cell_idx in range(self.get_num_sites() // num_unit_cell_sites):
+                self.add_edge(
+                    (
+                        edge[0] + cell_idx * num_unit_cell_sites,
+                        edge[1] + cell_idx * num_unit_cell_sites,
+                    )
+                )
+
+        cell_neigh_indices = [
+            ((i - 1) * self._num_vec1_repititions + (j - 1)) * num_unit_cell_sites
+            for i in range(3)
+            for j in range(3)
+        ]
+
+        for i in range(self._num_vec2_repititions - 1):
+            for j in range(self._num_vec1_repititions - 1):
+                cell_idx = i * self._num_vec1_repititions + j
+                for cell_neigh_idx in exterior_unit_cell_edges:
+                    for edge in exterior_unit_cell_edges[cell_neigh_idx]:
+                        self.add_edge(
+                            (
+                                (cell_idx * num_unit_cell_sites + edge[0]) % num_sites,
+                                (
+                                    cell_idx * num_unit_cell_sites
+                                    + edge[1]
+                                    + cell_neigh_indices[cell_neigh_idx]
+                                )
+                                % num_sites,
+                            )
+                        )
+
+    def get_num_unit_cell_sites(self):
+        return self._num_unit_cell_sites
+
+    def get_num_cells(self):
+        return self.get_num_sites() // self.get_num_unit_cell_sites()
+
+    def get_local_site_index(self, global_idx):
+        return global_idx % self._num_unit_cell_sites
+
+
+class HoneycombLattice(CrystalLattice):
+    def __init__(self, N, M, BC="open"):
+        a1 = (1.0, 0.0)
+        a2 = (1.0 / 2.0, math.sqrt(3.0) / 2.0)
+        unit_cell_sites = [(0.0, 0.25), (0.0, 0.75)]
+        super().__init__(
+            a1,
+            a2,
+            N,
+            M,
+            unit_cell_sites,
+            interrior_unit_cell_edges=[(0, 1)],
+            exterior_unit_cell_edges={7: [(0, 1)], 8: [(0, 1)]},
+            BC=BC,
+        )
+
+        # self._lattice_vec1 = a1
+        # self._lattice_vec2 = a2
+
+        # self._num_vec1_repititions = M
+        # self._num_vec2_repititions = N
+
+        # for i in range(self._num_vec2_repititions - 1, -1, -1):
+        #     for j in range(self._num_vec1_repititions):
+        #         self.add_site(
+        #             (
+        #                 i * self._lattice_vec2[0] + j * self._lattice_vec1[0],
+        #                 i * self._lattice_vec2[1] + j * self._lattice_vec1[1],
+        #             )
+        #         )
+        #         self.add_site(
+        #             (
+        #                 b[0] + i * self._lattice_vec2[0] + j * self._lattice_vec1[0],
+        #                 b[1] + i * self._lattice_vec2[1] + j * self._lattice_vec1[1],
+        #             )
+        #         )
+        #         self.add_edge((self.get_num_sites()-2, self.get_num_sites()-1))
+
+        # # for i in range(1, self.get_num_sites(), 2):
+        # #     self.add_edge((i, (i+2*self._num_vec1_repititions-1)%self.get_num_sites()))
+        # #     self.add_edge((i, (i+2*self._num_vec1_repititions+1)%self.get_num_sites()))
+
+        # for i in range(self._num_vec2_repititions-1):
+        #     for j in range(self._num_vec1_repititions-1):
+        #         self.add_edge((2*(j+i*self._num_vec1_repititions)+1, 2*(j + self._num_vec1_repititions+i*self._num_vec1_repititions)))
+        #         self.add_edge((2*(j+i*self._num_vec1_repititions)+1, 2*(j + 1 + self._num_vec1_repititions+i*self._num_vec1_repititions)))
