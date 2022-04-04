@@ -77,7 +77,7 @@ class Lattice:
 
         self._num_edges = self._num_edges - 1
 
-    def plot(self, show_idx_bool=False):
+    def plot(self, show_idx_bool=False, **kwargs):
         x_vals = [self._sites[i][0] for i in range(self.get_num_sites())]
         y_vals = [self._sites[i][1] for i in range(self.get_num_sites())]
 
@@ -122,15 +122,13 @@ class Lattice:
         plt.ylabel(r"$y$")
         plt.grid(linestyle=":", zorder=-10)
 
-        ax.scatter(
+        return ax.scatter(
             x_vals,
             y_vals,
-            c="red",
             zorder=10,
             s=site_size,
+            **kwargs,
         )
-
-        plt.show()
 
     def get_num_sites(self):
         return self._num_sites
