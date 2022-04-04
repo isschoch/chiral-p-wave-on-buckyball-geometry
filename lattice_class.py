@@ -423,7 +423,11 @@ class HoneycombLattice(CrystalLattice):
         for i in range(self._num_vec2_repititions - 1):
             self.add_edge(
                 (
-                    i * self._num_vec1_repititions * num_unit_cell_sites + self._num_vec1_repititions * num_unit_cell_sites - 2,
-                    (i + 1) * self._num_vec1_repititions * num_unit_cell_sites + self._num_vec1_repititions * num_unit_cell_sites - 1,
+                    i * self._num_vec1_repititions * num_unit_cell_sites
+                    + self._num_vec1_repititions * num_unit_cell_sites
+                    - 2,
+                    (i + 1) * self._num_vec1_repititions * num_unit_cell_sites
+                    + self._num_vec1_repititions * num_unit_cell_sites
+                    - 1,
                 )
             )
