@@ -73,18 +73,45 @@ class HamiltonianConstructor:
             H_direct_lattice
         ), "Hermitian Hamiltonian check assertion failed."
 
+        assert self._particle_hole_sym_check(
+            H_direct_lattice, num_sites
+        ), "Particle-Hole symmetry assertion failed"
+
         return H_direct_lattice
 
     def add_tunneling_phase(self, H_direct_lattice, edge, phase, num_sites):
         block_indices = self.get_block_indices(num_sites)
-        H_direct_lattice[block_indices[edge[0]], block_indices[edge[1]]] *= phase
-        H_direct_lattice[
-            block_indices[edge[1]], block_indices[edge[0]]
+        H_direct_lattice[block_indices[edge[0]], block_indices[edge[1]]][
+            0:2, :
+        ] *= phase
+        H_direct_lattice[block_indices[edge[0]], block_indices[edge[1]]][
+            2:4, :
         ] *= phase.conjugate()
+
+        H_direct_lattice[block_indices[edge[1]], block_indices[edge[0]]][
+            :, 0:2
+        ] *= phase.conjugate()
+        H_direct_lattice[block_indices[edge[1]], block_indices[edge[0]]][
+            :, 2:4
+        ] *= phase
 
         assert self._hermitian_check(
             H_direct_lattice
         ), "Hermitian Hamtilonian check assertion failed."
 
+        assert self._particle_hole_sym_check(
+            H_direct_lattice, num_sites
+        ), "Particle-Hole symmetry assertion failed"
+
     def _hermitian_check(self, A, rtol=1e-05, atol=1e-08):
         return np.allclose(A, A.conj().T, rtol=rtol, atol=atol)
+
+    def _particle_hole_sym_check(self, A, num_sites, rtol=1e-05, atol=1e-08):
+        P = np.zeros(shape=(num_sites * self.dim_H_BdG, num_sites * self.dim_H_BdG))
+        permute_particle_spaces = np.array(
+            [[0, 0, 1, 0], [0, 0, 0, 1], [1, 0, 0, 0], [0, 1, 0, 0]]
+        )
+        P = np.kron(np.eye(num_sites), permute_particle_spaces)
+        return np.allclose(
+            np.matmul(P, A.conj()), -np.matmul(A, P), rtol=rtol, atol=atol
+        )

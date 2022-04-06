@@ -17,6 +17,10 @@ class Lattice:
         self._local_edge_idx.append([])
         self._num_sites = self._num_sites + 1
 
+    def add_sites(self, coords_list):
+        for coords in coords_list:
+            self.add_site(coords)
+
     def move_site(self, site_idx, coords):
         assert site_idx < self._num_sites
         self._sites[site_idx] = coords
@@ -51,6 +55,11 @@ class Lattice:
             self.get_num_sites() >= 0 and self.get_num_edges() >= 0
         ), "Postivie number of sites and edges assertion failed"
 
+    def remove_sites(self, site_indices):
+        site_indices.sort(reverse=True)
+        for site_idx in site_indices:
+            self.remove_site(site_idx)
+
     def add_edge(self, sites, local_edge_indicies=(None, None)):
         assert sites[0] < len(self._sites) and sites[1] < len(
             self._sites
@@ -62,6 +71,13 @@ class Lattice:
         self._local_edge_idx[sites[1]].append(local_edge_indicies[1])
 
         self._num_edges = self._num_edges + 1
+
+    def add_edges(self, edges, local_edge_indices_list=None):
+        if local_edge_indices_list == None:
+            local_edge_indices_list = [(None, None) for edge in edges]
+
+        for edge_lcl_idx in zip(edges, local_edge_indices_list):
+            self.add_edge(edge_lcl_idx[0], edge_lcl_idx[1])
 
     def remove_edge(self, sites):
         assert sites[0] < len(self._sites) and sites[1] < len(self._sites)
@@ -76,6 +92,10 @@ class Lattice:
         self._local_edge_idx[sites[1]].pop(site_1_list_idx)
 
         self._num_edges = self._num_edges - 1
+
+    def remove_edges(self, edges):
+        for edge in edges:
+            self.remove_edge(edge)
 
     def plot(self, show_idx_bool=False, **kwargs):
         x_vals = [self._sites[i][0] for i in range(self.get_num_sites())]
@@ -110,7 +130,8 @@ class Lattice:
                 ax.plot(
                     [site[0], self._sites[neighbour][0]],
                     [site[1], self._sites[neighbour][1]],
-                    c="lightsteelblue",
+                    c="black",
+                    alpha=0.2,
                     zorder=5,
                 )
 
@@ -233,7 +254,6 @@ class BravaisLattice(Lattice):
                     ),
                 )
         elif BC == "periodic":
-            print("hello there")
             for i in range(self._num_vec2_repititions):
                 for j in range(self._num_vec1_repititions):
                     self.add_edge(
