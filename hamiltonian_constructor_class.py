@@ -37,8 +37,8 @@ class HamiltonianConstructor:
         self.site_hamiltonian = np.diag([-mu, -mu, mu, mu])
         self.dim_H_BdG = 4
 
-    def get_hop_hamiltonian(self, local_edge_idx):
-        return self.hop_hamiltonians[local_edge_idx]
+    def get_hop_hamiltonian(self, local_bond_idx):
+        return self.hop_hamiltonians[local_bond_idx]
 
     def get_block_indices(self, num_sites):
         return [
@@ -48,7 +48,7 @@ class HamiltonianConstructor:
 
     def construct_direct_lattice_hamiltonian(self, lattice):
         num_sites = lattice.get_num_sites()
-        lattice_edges = lattice.get_edges()
+        lattice_bonds = lattice.get_bonds()
 
         H_direct_lattice = np.zeros(
             shape=(num_sites * self.dim_H_BdG, num_sites * self.dim_H_BdG),
@@ -62,11 +62,11 @@ class HamiltonianConstructor:
                 block_indices[site_idx], block_indices[site_idx]
             ] = self.site_hamiltonian
 
-            for neighbour_idx in lattice_edges[site_idx]:
+            for neighbour_idx in lattice_bonds[site_idx]:
                 H_direct_lattice[
                     block_indices[site_idx], block_indices[neighbour_idx]
                 ] = self.hop_hamiltonians[
-                    lattice.get_local_edge_index(site_idx, neighbour_idx)
+                    lattice.get_local_bond_index(site_idx, neighbour_idx)
                 ]
 
         assert self._hermitian_check(
@@ -79,19 +79,19 @@ class HamiltonianConstructor:
 
         return H_direct_lattice
 
-    def add_tunneling_phase(self, H_direct_lattice, edge, phase, num_sites):
+    def add_phase(self, H_direct_lattice, bond, phase, num_sites):
         block_indices = self.get_block_indices(num_sites)
-        H_direct_lattice[block_indices[edge[0]], block_indices[edge[1]]][
+        H_direct_lattice[block_indices[bond[0]], block_indices[bond[1]]][
             0:2, :
         ] *= phase
-        H_direct_lattice[block_indices[edge[0]], block_indices[edge[1]]][
+        H_direct_lattice[block_indices[bond[0]], block_indices[bond[1]]][
             2:4, :
         ] *= phase.conjugate()
 
-        H_direct_lattice[block_indices[edge[1]], block_indices[edge[0]]][
+        H_direct_lattice[block_indices[bond[1]], block_indices[bond[0]]][
             :, 0:2
         ] *= phase.conjugate()
-        H_direct_lattice[block_indices[edge[1]], block_indices[edge[0]]][
+        H_direct_lattice[block_indices[bond[1]], block_indices[bond[0]]][
             :, 2:4
         ] *= phase
 

@@ -6,15 +6,15 @@ import math
 class Lattice:
     def __init__(self):
         self._num_sites = 0
-        self._num_edges = 0
+        self._num_bonds = 0
         self._sites = []
-        self._edges = []
-        self._local_edge_idx = []
+        self._bonds = []
+        self._local_bond_idx = []
 
     def add_site(self, coords):
         self._sites.append(coords)
-        self._edges.append([])
-        self._local_edge_idx.append([])
+        self._bonds.append([])
+        self._local_bond_idx.append([])
         self._num_sites = self._num_sites + 1
 
     def add_sites(self, coords_list):
@@ -26,76 +26,82 @@ class Lattice:
         self._sites[site_idx] = coords
 
     def remove_site(self, site_idx):
-        # remove all incoming and outgoing edges
+        # remove all incoming and outgoing bonds
         assert site_idx < len(self._sites), "Site exists assertion failed"
-        edge_cnt = 0
-        for (edge_idx, edge_lst) in enumerate(self._edges):
-            for neigh in edge_lst:
+        bond_cnt = 0
+        for (bond_idx, bond_lst) in enumerate(self._bonds):
+            for neigh in bond_lst:
                 if neigh == site_idx:
-                    self.remove_edge((site_idx, edge_idx))
-                    edge_cnt = edge_cnt + 1
+                    self.remove_bond((site_idx, bond_idx))
+                    bond_cnt = bond_cnt + 1
 
-        # remove site from self._sites and self._edges
+        # remove site from self._sites and self._bonds
         self._sites.pop(site_idx)
-        self._edges.pop(site_idx)
-        self._local_edge_idx.pop(site_idx)
+        self._bonds.pop(site_idx)
+        self._local_bond_idx.pop(site_idx)
 
         # shift inidices
-        for (edge_idx, edge_lst) in enumerate(self._edges):
-            for (neigh_idx, neigh) in enumerate(edge_lst):
+        for (bond_idx, bond_lst) in enumerate(self._bonds):
+            for (neigh_idx, neigh) in enumerate(bond_lst):
                 if neigh > site_idx:
-                    self._edges[edge_idx][neigh_idx] = (
-                        self._edges[edge_idx][neigh_idx] - 1
+                    self._bonds[bond_idx][neigh_idx] = (
+                        self._bonds[bond_idx][neigh_idx] - 1
                     )
 
-        # adjust node and edge count
+        # adjust node and bond count
         self._num_sites = len(self._sites)
 
         assert (
-            self.get_num_sites() >= 0 and self.get_num_edges() >= 0
-        ), "Postivie number of sites and edges assertion failed"
+            self.get_num_sites() >= 0 and self.get_num_bonds() >= 0
+        ), "Postivie number of sites and bonds assertion failed"
 
     def remove_sites(self, site_indices):
         site_indices.sort(reverse=True)
         for site_idx in site_indices:
             self.remove_site(site_idx)
 
-    def add_edge(self, sites, local_edge_indicies=(None, None)):
+    def add_bond(self, sites, local_bond_indicies=(None, None)):
         assert sites[0] < len(self._sites) and sites[1] < len(
             self._sites
-        ), "Both sites exist assertion failed while trying to add edge."
-        self._edges[sites[0]].append(sites[1])
-        self._edges[sites[1]].append(sites[0])
+        ), "Both sites exist assertion failed while trying to add bond."
+        self._bonds[sites[0]].append(sites[1])
+        self._bonds[sites[1]].append(sites[0])
 
-        self._local_edge_idx[sites[0]].append(local_edge_indicies[0])
-        self._local_edge_idx[sites[1]].append(local_edge_indicies[1])
+        self._local_bond_idx[sites[0]].append(local_bond_indicies[0])
+        self._local_bond_idx[sites[1]].append(local_bond_indicies[1])
 
-        self._num_edges = self._num_edges + 1
+        self._num_bonds = self._num_bonds + 1
 
-    def add_edges(self, edges, local_edge_indices_list=None):
-        if local_edge_indices_list == None:
-            local_edge_indices_list = [(None, None) for edge in edges]
+    def add_bonds(self, bonds, local_bond_indices_list=None):
+        if local_bond_indices_list == None:
+            local_bond_indices_list = [(None, None) for bond in bonds]
 
-        for edge_lcl_idx in zip(edges, local_edge_indices_list):
-            self.add_edge(edge_lcl_idx[0], edge_lcl_idx[1])
+        for bond_lcl_idx in zip(bonds, local_bond_indices_list):
+            self.add_bond(bond_lcl_idx[0], bond_lcl_idx[1])
 
-    def remove_edge(self, sites):
+    def remove_bond(self, sites):
         assert sites[0] < len(self._sites) and sites[1] < len(self._sites)
 
-        site_0_list_idx = self._edges[sites[0]].index(sites[1])
-        site_1_list_idx = self._edges[sites[1]].index(sites[0])
+        site_0_list_idx = self._bonds[sites[0]].index(sites[1])
+        site_1_list_idx = self._bonds[sites[1]].index(sites[0])
 
-        self._edges[sites[0]].pop(site_0_list_idx)
-        self._edges[sites[1]].pop(site_1_list_idx)
+        self._bonds[sites[0]].pop(site_0_list_idx)
+        self._bonds[sites[1]].pop(site_1_list_idx)
 
-        self._local_edge_idx[sites[0]].pop(site_0_list_idx)
-        self._local_edge_idx[sites[1]].pop(site_1_list_idx)
+        self._local_bond_idx[sites[0]].pop(site_0_list_idx)
+        self._local_bond_idx[sites[1]].pop(site_1_list_idx)
 
-        self._num_edges = self._num_edges - 1
+        self._num_bonds = self._num_bonds - 1
 
-    def remove_edges(self, edges):
-        for edge in edges:
-            self.remove_edge(edge)
+    def remove_bonds(self, bonds):
+        for bond in bonds:
+            self.remove_bond(bond)
+
+    def glue_bond(self, bonds1, bonds2):
+        assert len(bonds1) == len(
+            bonds2
+        ), "Assertion that bond lists have same length failed"
+        sites1 = []
 
     def plot(self, show_idx_bool=False, **kwargs):
         x_vals = [self._sites[i][0] for i in range(self.get_num_sites())]
@@ -113,7 +119,7 @@ class Lattice:
 
         site_size = max(500 / self.get_num_sites(), 10)
 
-        # plot edges
+        # plot bonds
         for idx, site in enumerate(self._sites):
             if show_idx_bool:
                 ax.text(
@@ -126,7 +132,7 @@ class Lattice:
                     horizontalalignment="right",
                     verticalalignment="bottom",
                 )
-            for neighbour in self._edges[idx]:
+            for neighbour in self._bonds[idx]:
                 ax.plot(
                     [site[0], self._sites[neighbour][0]],
                     [site[1], self._sites[neighbour][1]],
@@ -154,32 +160,32 @@ class Lattice:
     def get_num_sites(self):
         return self._num_sites
 
-    def get_num_edges(self):
-        return self._num_edges
+    def get_num_bonds(self):
+        return self._num_bonds
 
     def get_sites(self):
         return self._sites
 
-    def get_edges(self):
-        return self._edges
+    def get_bonds(self):
+        return self._bonds
 
-    def get_local_edge_indices(self):
-        return self._local_edge_idx
+    def get_local_bond_indices(self):
+        return self._local_bond_idx
 
-    def get_local_edge_index(self, site_idx, neighbour_idx):
+    def get_local_bond_index(self, site_idx, neighbour_idx):
         assert (
-            neighbour_idx in self._edges[site_idx]
+            neighbour_idx in self._bonds[site_idx]
         ), "Site {} and {} are not adjacent".format(site_idx, neighbour_idx)
-        return self._local_edge_idx[site_idx][
-            self._edges[site_idx].index(neighbour_idx)
+        return self._local_bond_idx[site_idx][
+            self._bonds[site_idx].index(neighbour_idx)
         ]
 
-    def change_local_edge_index(self, sites, new_local_idx):
-        assert (sites[1] in self._edges[sites[0]]) and (
-            sites[0] in self._edges[sites[1]]
+    def change_local_bond_index(self, sites, new_local_idx):
+        assert (sites[1] in self._bonds[sites[0]]) and (
+            sites[0] in self._bonds[sites[1]]
         ), "Site {} and {} are not adjacent".format(sites[0], sites[1])
-        self._local_edge_idx[sites[0]][
-            self._edges[sites[0]].index(sites[1])
+        self._local_bond_idx[sites[0]][
+            self._bonds[sites[0]].index(sites[1])
         ] = new_local_idx
 
 
@@ -206,7 +212,7 @@ class BravaisLattice(Lattice):
 
         if BC == "open":
             for i in range(self._num_vec2_repititions - 1):
-                self.add_edge(
+                self.add_bond(
                     (
                         i * self._num_vec1_repititions + self._num_vec1_repititions - 1,
                         (i + 1) * self._num_vec1_repititions
@@ -219,7 +225,7 @@ class BravaisLattice(Lattice):
                     ),
                 )
                 for j in range(self._num_vec1_repititions - 1):
-                    self.add_edge(
+                    self.add_bond(
                         (
                             i * self._num_vec1_repititions + j,
                             i * self._num_vec1_repititions + (j + 1),
@@ -229,7 +235,7 @@ class BravaisLattice(Lattice):
                             3,
                         ),
                     )
-                    self.add_edge(
+                    self.add_bond(
                         (
                             i * self._num_vec1_repititions + j,
                             (i + 1) * self._num_vec1_repititions + j,
@@ -240,7 +246,7 @@ class BravaisLattice(Lattice):
                         ),
                     )
             for j in range(self._num_vec1_repititions - 1):
-                self.add_edge(
+                self.add_bond(
                     (
                         (self._num_vec2_repititions - 1) * self._num_vec1_repititions
                         + j,
@@ -256,7 +262,7 @@ class BravaisLattice(Lattice):
         elif BC == "periodic":
             for i in range(self._num_vec2_repititions):
                 for j in range(self._num_vec1_repititions):
-                    self.add_edge(
+                    self.add_bond(
                         (
                             i * self._num_vec1_repititions + j,
                             i * self._num_vec1_repititions
@@ -267,7 +273,7 @@ class BravaisLattice(Lattice):
                             3,
                         ),
                     )
-                    self.add_edge(
+                    self.add_bond(
                         (
                             ((i + 1) * self._num_vec1_repititions + j)
                             % (self._num_vec1_repititions * self._num_vec2_repititions),
@@ -336,7 +342,7 @@ class ChainLattice(BravaisLattice):
 
         if BC == "periodic":
             for i in range(self.get_num_sites()):
-                self.remove_edge((i, i))
+                self.remove_bond((i, i))
 
 
 class CrystalLattice(Lattice):
@@ -347,8 +353,8 @@ class CrystalLattice(Lattice):
         N,
         M,
         unit_cell_sites,
-        interrior_unit_cell_edges=[],
-        exterior_unit_cell_edges=[],
+        interrior_unit_cell_bonds=[],
+        exterior_unit_cell_bonds=[],
         BC="open",
     ):
         super().__init__()
@@ -378,12 +384,12 @@ class CrystalLattice(Lattice):
 
         num_unit_cell_sites = self.get_num_unit_cell_sites()
         num_sites = self.get_num_sites()
-        for edge in interrior_unit_cell_edges:
+        for bond in interrior_unit_cell_bonds:
             for cell_idx in range(self.get_num_sites() // num_unit_cell_sites):
-                self.add_edge(
+                self.add_bond(
                     (
-                        edge[0] + cell_idx * num_unit_cell_sites,
-                        edge[1] + cell_idx * num_unit_cell_sites,
+                        bond[0] + cell_idx * num_unit_cell_sites,
+                        bond[1] + cell_idx * num_unit_cell_sites,
                     )
                 )
 
@@ -396,14 +402,14 @@ class CrystalLattice(Lattice):
         for i in range(self._num_vec2_repititions - 1):
             for j in range(self._num_vec1_repititions - 1):
                 cell_idx = i * self._num_vec1_repititions + j
-                for cell_neigh_idx in exterior_unit_cell_edges:
-                    for edge in exterior_unit_cell_edges[cell_neigh_idx]:
-                        self.add_edge(
+                for cell_neigh_idx in exterior_unit_cell_bonds:
+                    for bond in exterior_unit_cell_bonds[cell_neigh_idx]:
+                        self.add_bond(
                             (
-                                (cell_idx * num_unit_cell_sites + edge[0]) % num_sites,
+                                (cell_idx * num_unit_cell_sites + bond[0]) % num_sites,
                                 (
                                     cell_idx * num_unit_cell_sites
-                                    + edge[1]
+                                    + bond[1]
                                     + cell_neigh_indices[cell_neigh_idx]
                                 )
                                 % num_sites,
@@ -431,15 +437,15 @@ class HoneycombLattice(CrystalLattice):
             N,
             M,
             unit_cell_sites,
-            interrior_unit_cell_edges=[(0, 1)],
-            exterior_unit_cell_edges={7: [(0, 1)], 8: [(0, 1)]},
+            interrior_unit_cell_bonds=[(0, 1)],
+            exterior_unit_cell_bonds={7: [(0, 1)], 8: [(0, 1)]},
             BC=BC,
         )
 
         num_cells = self.get_num_cells()
         num_unit_cell_sites = self.get_num_unit_cell_sites()
         for i in range(self._num_vec2_repititions - 1):
-            self.add_edge(
+            self.add_bond(
                 (
                     i * self._num_vec1_repititions * num_unit_cell_sites
                     + self._num_vec1_repititions * num_unit_cell_sites
