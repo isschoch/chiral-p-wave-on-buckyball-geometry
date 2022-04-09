@@ -1,4 +1,5 @@
 import site
+from unittest import SkipTest
 import matplotlib.pyplot as plt
 import math
 
@@ -102,6 +103,47 @@ class Lattice:
             bonds2
         ), "Assertion that bond lists have same length failed"
         sites1 = []
+
+    def move_lattice(self, displacement):
+        old_lattice_sites = self._sites
+        self._sites = []
+        for site_idx in range(self.get_num_sites()):
+            self._sites.append(
+                (
+                    old_lattice_sites[site_idx][0] + displacement[0],
+                    old_lattice_sites[site_idx][1] + displacement[1],
+                )
+            )
+
+    def canonical_order(self):
+        sites_indexed = [*zip(range(self.get_num_sites()), self._sites)]
+        sites_indexed.sort(key=lambda site: site[1][0])
+        sites_indexed.sort(key=lambda site: site[1][1], reverse=True)
+        old_bonds = self._bonds
+        old_local_bond_idx = self._local_bond_idx
+
+        new_to_old_idx_transformation = [
+            site_indexed[0] for site_indexed in sites_indexed
+        ]
+        indexed_transformation = [
+            *zip(range(self.get_num_sites()), new_to_old_idx_transformation)
+        ]
+        indexed_transformation.sort(key=lambda elem_mapping: elem_mapping[1])
+        old_to_new_idx_transformation = [
+            transformation_elem[0] for transformation_elem in indexed_transformation
+        ]
+
+        self._sites = [site_indexed[1] for site_indexed in sites_indexed]
+        reordered_bonds = [old_bonds[site_indexed[0]] for site_indexed in sites_indexed]
+        self._bonds = []
+        for bond_list in reordered_bonds:
+            new_index_bond_lists = []
+            for neigh_idx in bond_list:
+                new_index_bond_lists.append(old_to_new_idx_transformation[neigh_idx])
+            self._bonds.append(new_index_bond_lists)
+        self._local_bond_idx = [
+            old_local_bond_idx[site_indexed[0]] for site_indexed in sites_indexed
+        ]
 
     def plot(self, show_idx_bool=False, **kwargs):
         x_vals = [self._sites[i][0] for i in range(self.get_num_sites())]
