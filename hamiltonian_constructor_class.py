@@ -11,8 +11,8 @@ class HamiltonianConstructor:
             [
                 [0.0, 0.0, 0.0, complex(0.0, 1.0) * delta],
                 [0.0, 0.0, complex(0.0, 1.0) * delta, 0.0],
-                [0.0, complex(0.0, 1.0) * delta.conjugate(), 0.0, 0.0],
-                [complex(0.0, 1.0) * delta.conjugate(), 0.0, 0.0, 0.0],
+                [0.0, complex(0.0, 1.0) * (delta.conjugate()), 0.0, 0.0],
+                [complex(0.0, 1.0) * (delta.conjugate()), 0.0, 0.0, 0.0],
             ],
             dtype=complex,
         )
@@ -61,6 +61,7 @@ class HamiltonianConstructor:
             H_direct_lattice[
                 block_indices[site_idx], block_indices[site_idx]
             ] = self.site_hamiltonian
+            print("Added site hamiltonian")
 
             for neighbour_idx in lattice_bonds[site_idx]:
                 H_direct_lattice[
@@ -81,12 +82,15 @@ class HamiltonianConstructor:
 
     def add_phase(self, H_direct_lattice, bond, phase, num_sites):
         block_indices = self.get_block_indices(num_sites)
+
         H_direct_lattice[block_indices[bond[0]], block_indices[bond[1]]][
             0:2, :
         ] *= phase
         H_direct_lattice[block_indices[bond[0]], block_indices[bond[1]]][
             2:4, :
         ] *= phase.conjugate()
+
+        print("phase bloc hamil = ", H_direct_lattice[block_indices[bond[0]], block_indices[bond[1]]])
 
         H_direct_lattice[block_indices[bond[1]], block_indices[bond[0]]][
             :, 0:2

@@ -189,7 +189,7 @@ class Lattice:
 
         plt.xlabel(r"$x$")
         plt.ylabel(r"$y$")
-        plt.grid(linestyle=":", zorder=-10)
+        # plt.grid(linestyle=":", zorder=-10)
 
         return ax.scatter(
             x_vals,
