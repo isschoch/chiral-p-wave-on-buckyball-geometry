@@ -25,6 +25,10 @@ class Lattice:
     def move_site(self, site_idx, coords):
         assert site_idx < self._num_sites
         self._sites[site_idx] = coords
+    
+    def move_sites(self, site_indices, coords):
+        for site_idx in site_indices:
+            self.move_site(site_idx, (self._sites[site_idx][0] + coords[0], self._sites[site_idx][1] + coords[1]))
 
     def remove_site(self, site_idx):
         # remove all incoming and outgoing bonds
@@ -98,11 +102,52 @@ class Lattice:
         for bond in bonds:
             self.remove_bond(bond)
 
-    def glue_bond(self, bonds1, bonds2):
-        assert len(bonds1) == len(
-            bonds2
+    def glue_bond(self, sites1, sites2, lcl_bond_idx, codim=1):
+        extra_row = (codim + 1) % 2
+        assert len(sites1) == len(
+            sites2
         ), "Assertion that bond lists have same length failed"
-        sites1 = []
+
+        new_bonds = []
+
+        if codim == 1:
+            new_bonds = [*zip(sites1, sites2)]
+        elif codim == 2:
+            for itr, site_idx in enumerate(sites1):
+                missing_bonds_set = set(self._bonds[sites2[itr]]).difference(sites1)
+                for elem in set(self._bonds[site_idx]):
+                    missing_bonds_set.discard(elem)
+
+                for elem in missing_bonds_set:
+                    new_bonds.append((site_idx, elem))
+
+        self.add_bonds(new_bonds, [lcl_bond_idx for i in range(len(new_bonds))])
+        if codim == 2:
+            remove_from_new_bonds = []
+            for itr in range(len(new_bonds)):
+                if new_bonds[itr][0] in sites2 or new_bonds[itr][1] in sites2:
+                    remove_from_new_bonds.append(itr)
+            
+            remove_from_new_bonds.sort(reverse=True)
+            for pop_idx in remove_from_new_bonds:
+                new_bonds.pop(pop_idx)
+
+            self.remove_sites(sites2)
+
+            sites2.sort()
+            new_bonds_shifted_idx = []
+            for bond in new_bonds:
+                new_bond_idx_1 = bond[0]
+                new_bond_idx_2 = bond[1]
+                for site in sites2:
+                    if bond[0] >= site:
+                        new_bond_idx_1 -= 1
+                    if bond[1] >= site:
+                        new_bond_idx_2 -= 1
+                new_bonds_shifted_idx.append((new_bond_idx_1, new_bond_idx_2))
+            new_bonds = new_bonds_shifted_idx
+
+        return new_bonds
 
     def move_lattice(self, displacement):
         old_lattice_sites = self._sites

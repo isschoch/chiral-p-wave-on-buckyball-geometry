@@ -4,8 +4,8 @@ import numpy as np
 class HamiltonianConstructor:
     def __init__(self, mu, tx, ty, delta):
 
-        self.H_tunnel_x = 0.5 * np.diag([tx, tx, -tx, -tx])
-        self.H_tunnel_y = 0.5 * np.diag([ty, ty, -ty, -ty])
+        self.H_tunnel_x = 0.5 * np.diag([-tx, -tx, tx, tx])
+        self.H_tunnel_y = 0.5 * np.diag([-ty, -ty, ty, ty])
 
         H_sc_x = 0.5 * np.array(
             [
@@ -34,7 +34,7 @@ class HamiltonianConstructor:
         H_down = self.H_tunnel_y - H_sc_y
 
         self.hop_hamiltonians = [H_up, H_right, H_down, H_left]
-        self.site_hamiltonian = np.diag([-mu, -mu, mu, mu])
+        self.site_hamiltonian = 0.5 * np.diag([-mu, -mu, mu, mu])
         self.dim_H_BdG = 4
 
     def get_hop_hamiltonian(self, local_bond_idx):
@@ -61,7 +61,6 @@ class HamiltonianConstructor:
             H_direct_lattice[
                 block_indices[site_idx], block_indices[site_idx]
             ] = self.site_hamiltonian
-            print("Added site hamiltonian")
 
             for neighbour_idx in lattice_bonds[site_idx]:
                 H_direct_lattice[
@@ -89,8 +88,6 @@ class HamiltonianConstructor:
         H_direct_lattice[block_indices[bond[0]], block_indices[bond[1]]][
             2:4, :
         ] *= phase.conjugate()
-
-        print("phase bloc hamil = ", H_direct_lattice[block_indices[bond[0]], block_indices[bond[1]]])
 
         H_direct_lattice[block_indices[bond[1]], block_indices[bond[0]]][
             :, 0:2
