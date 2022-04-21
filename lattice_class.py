@@ -25,10 +25,16 @@ class Lattice:
     def move_site(self, site_idx, coords):
         assert site_idx < self._num_sites
         self._sites[site_idx] = coords
-    
+
     def move_sites(self, site_indices, coords):
         for site_idx in site_indices:
-            self.move_site(site_idx, (self._sites[site_idx][0] + coords[0], self._sites[site_idx][1] + coords[1]))
+            self.move_site(
+                site_idx,
+                (
+                    self._sites[site_idx][0] + coords[0],
+                    self._sites[site_idx][1] + coords[1],
+                ),
+            )
 
     def remove_site(self, site_idx):
         # remove all incoming and outgoing bonds
@@ -127,7 +133,7 @@ class Lattice:
             for itr in range(len(new_bonds)):
                 if new_bonds[itr][0] in sites2 or new_bonds[itr][1] in sites2:
                     remove_from_new_bonds.append(itr)
-            
+
             remove_from_new_bonds.sort(reverse=True)
             for pop_idx in remove_from_new_bonds:
                 new_bonds.pop(pop_idx)
