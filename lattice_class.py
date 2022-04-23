@@ -240,12 +240,13 @@ class Lattice:
                         (1 - start) * site[1] + start * self._sites[neighbour][1],
                         0.5 * (self._sites[neighbour][0] - site[0]),
                         0.5 * (self._sites[neighbour][1] - site[1]),
-                        color="red",
+                        color="green",
                         length_includes_head=True,
                         head_width=0.2,
                         shape="full",
                         lw=1,
-                        alpha=0.75,
+                        alpha=0.9,
+                        zorder=8,
                     )
 
         # plot sites
@@ -257,7 +258,7 @@ class Lattice:
                 x_ticks = range(
                     math.floor(min(x_ticks)),
                     math.ceil(max(x_ticks)),
-                    (math.ceil(max(x_ticks)) - math.floor(min(x_ticks))) // 10,
+                    max((math.ceil(max(x_ticks)) - math.floor(min(x_ticks))) // 10, 10),
                 )
             return x_ticks
 
