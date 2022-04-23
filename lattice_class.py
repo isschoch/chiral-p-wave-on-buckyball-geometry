@@ -196,7 +196,7 @@ class Lattice:
             old_local_bond_idx[site_indexed[0]] for site_indexed in sites_indexed
         ]
 
-    def plot(self, show_idx_bool=False, **kwargs):
+    def plot(self, show_idx_bool=False, node_color="black", flagged_bonds=[], **kwargs):
         x_vals = [self._sites[i][0] for i in range(self.get_num_sites())]
         y_vals = [self._sites[i][1] for i in range(self.get_num_sites())]
 
@@ -210,7 +210,7 @@ class Lattice:
         )
         ax.set_box_aspect(y_x_ratio)
 
-        site_size = max(500 / self.get_num_sites(), 10)
+        site_size = max(12000 / self.get_num_sites(), 20)
 
         # plot bonds
         for idx, site in enumerate(self._sites):
@@ -233,20 +233,55 @@ class Lattice:
                     alpha=0.2,
                     zorder=5,
                 )
+                if (idx, neighbour) in flagged_bonds:
+                    start = 0.25
+                    ax.arrow(
+                        (1 - start) * site[0] + start * self._sites[neighbour][0],
+                        (1 - start) * site[1] + start * self._sites[neighbour][1],
+                        0.5 * (self._sites[neighbour][0] - site[0]),
+                        0.5 * (self._sites[neighbour][1] - site[1]),
+                        color="red",
+                        length_includes_head=True,
+                        head_width=0.2,
+                        shape="full",
+                        lw=1,
+                        alpha=0.75,
+                    )
 
         # plot sites
-        plt.xticks(list(dict.fromkeys(x_vals)))
-        plt.yticks(list(dict.fromkeys(y_vals)))
+        x_ticks = list(dict.fromkeys(x_vals))
+        y_ticks = list(dict.fromkeys(y_vals))
+
+        def make_readable_ticks(x_ticks):
+            if len(x_ticks) > 20:
+                x_ticks = range(
+                    math.floor(min(x_ticks)),
+                    math.ceil(max(x_ticks)),
+                    (math.ceil(max(x_ticks)) - math.floor(min(x_ticks))) // 10,
+                )
+            return x_ticks
+
+        x_ticks = make_readable_ticks(x_ticks)
+        y_ticks = make_readable_ticks(y_ticks)
+        plt.xticks(x_ticks)
+        plt.yticks(y_ticks)
 
         plt.xlabel(r"$x$")
         plt.ylabel(r"$y$")
         # plt.grid(linestyle=":", zorder=-10)
+
+        if "c" not in kwargs and "color" not in kwargs:
+            kwargs["c"] = node_color
+
+        if "cmap" in kwargs:
+            node_color = kwargs["cmap"](0)
 
         return ax.scatter(
             x_vals,
             y_vals,
             zorder=10,
             s=site_size,
+            edgecolors=node_color,
             **kwargs,
         )
 
