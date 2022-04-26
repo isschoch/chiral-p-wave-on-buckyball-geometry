@@ -254,22 +254,22 @@ class Lattice:
         y_ticks = list(dict.fromkeys(y_vals))
 
         def make_readable_ticks(x_ticks):
-            if len(x_ticks) > 20:
+            if len(x_ticks) > 15:
                 x_ticks = range(
                     math.floor(min(x_ticks)),
                     math.ceil(max(x_ticks)),
-                    max((math.ceil(max(x_ticks)) - math.floor(min(x_ticks))) // 10, 10),
+                    max((math.ceil(max(x_ticks)) - math.floor(min(x_ticks))) // 7, 1),
                 )
             return x_ticks
 
         x_ticks = make_readable_ticks(x_ticks)
         y_ticks = make_readable_ticks(y_ticks)
+
         plt.xticks(x_ticks)
         plt.yticks(y_ticks)
 
         plt.xlabel(r"$x$")
         plt.ylabel(r"$y$")
-        # plt.grid(linestyle=":", zorder=-10)
 
         if "c" not in kwargs and "color" not in kwargs:
             kwargs["c"] = node_color
